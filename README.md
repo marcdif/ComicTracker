@@ -21,3 +21,25 @@ Web Interface:
 ---
 ![image](https://github.com/user-attachments/assets/03272145-37be-478b-87e6-bd47333a1ce3)
 
+Installation:
+---
+1. Install/configure MySQL (or MongoDB) database. The database schema is provided in the `database_schema.sql` file
+2. Prepare a `db_secret.json` file or provide the database credentials in environment variables (explained below).
+3. Start the application! It should be that simple.
+
+Database Credentials:
+---
+
+db_secret.json:
+```
+{
+    "host": "your-database-ip-here",
+    "user": "your-username-here",
+    "password": "your-password-here"
+}
+```
+
+Environment Variables:
+- `DB_HOST` - your database IP address
+- `DB_USER` - your database username
+- `DB_PASSWORD` - your database password
