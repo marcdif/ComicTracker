@@ -195,16 +195,16 @@ def view_all_series():
             "FROM series "
             "LEFT JOIN books ON series.id = books.series_fk "
             "GROUP BY series.title "
-            "ORDER BY series.title;"
+            "ORDER BY series.publisher, series.title;"
         )
 
         cursor.execute(query)
 
-        print(f"{'Publisher':<30} {'Series':<30} {'Issue Count':<10}")
+        print(f"{'Publisher':<30} {'Series':<40} {'Issue Count':<10}")
         print("-" * 40)
 
         for row in cursor:
-            print(f"{row['Series_Publisher']:<30} {row['Series_Title']:<30} {row['Issue_Count']:<10}")
+            print(f"{row['Series_Publisher']:<30} {row['Series_Title']:<40} {row['Issue_Count']:<10}")
 
     except mysql.connector.Error as err:
         print(f"Error: {err}")
@@ -233,16 +233,48 @@ def view_all_issues():
             "FROM books "
             "JOIN series ON books.series_fk = series.id "
             "GROUP BY series.title, books.issue "
-            "ORDER BY series.title, books.issue;"
+            "ORDER BY series.publisher, series.title, books.issue;"
         )
 
         cursor.execute(query)
 
-        print(f"{'Publisher':<30} {'Series':<30} {'Issue No.':<10} {'Count':<5}")
+        print(f"{'Publisher':<30} {'Series':<40} {'Issue No.':<10} {'Count':<5}")
         print("-" * 50)
 
         for row in cursor:
-            print(f"{row['Series_Publisher']:<30} {row['Series_Title']:<30} {row['Issue']:<10} {row['Count']:<5}")
+            print(f"{row['Series_Publisher']:<30} {row['Series_Title']:<40} {row['Issue']:<10} {row['Count']:<5}")
+
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+def get_issues_count():
+    db_credentials = load_db_credentials()
+    try:
+        connection = mysql.connector.connect(
+            host=db_credentials['host'],
+            user=db_credentials['user'],
+            password=db_credentials['password'],
+            database='comictracker',
+            charset='utf8mb4',
+            collation='utf8mb4_general_ci'
+        )
+        cursor = connection.cursor(dictionary=True)
+
+        # Query to fetch all issues
+        query = (
+            "SELECT COUNT(books.id) AS Count "
+            "FROM books;"
+        )
+
+        cursor.execute(query)
+
+        for row in cursor:
+            return row['Count']
 
     except mysql.connector.Error as err:
         print(f"Error: {err}")

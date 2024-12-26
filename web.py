@@ -1,6 +1,6 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
-from utils import load_db_credentials, add_issue, remove_issue, get_publishers, get_series_titles
+from utils import load_db_credentials, add_issue, remove_issue, get_publishers, get_series_titles, get_issues_count
 import mysql.connector
 
 def web_interface():
@@ -27,14 +27,16 @@ def web_interface():
                     cursor = connection.cursor(dictionary=True)
 
                     query = (
-                        "SELECT series.publisher AS Series_Publisher, series.title AS Series_Title, books.issue AS Issue, COUNT(books.id) AS Count "
+                        "SELECT series.publisher AS Series_Publisher, series.title AS Series_Title, books.issue AS Issue, COUNT(books.id) AS Count, COUNT(*) AS Total_Count "
                         "FROM books "
                         "JOIN series ON books.series_fk = series.id "
                         "GROUP BY series.title, books.issue "
-                        "ORDER BY series.title, books.issue;"
+                        "ORDER BY series.publisher, series.title, books.issue;"
                     )
 
                     cursor.execute(query)
+
+                    total_count = get_issues_count()
 
                     html_table = "<table border='1'>"
                     html_table += "<tr><th>Publisher</th><th>Series</th><th>Issue No.</th><th>Count</th><th>Action</th></tr>"
@@ -159,8 +161,23 @@ def web_interface():
             document.getElementById('issue').focus();
         </script>
 
-        <h2>Comic Book Issues</h2>
-        {html_table} <!-- Insert the table content here -->
+        <h2>Comic Book Issues - {total_count} Total</h2>
+        {html_table}
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function (event) {{
+            var scrollpos = sessionStorage.getItem('scrollpos');
+            if (scrollpos) {{
+                window.scrollTo(0, scrollpos);
+                sessionStorage.removeItem('scrollpos');
+            }}
+        }});
+
+        window.addEventListener("beforeunload", function (e) {{
+            sessionStorage.setItem('scrollpos', window.scrollY);
+        }});
+    </script>
+
     </body>
     </html>
     """
