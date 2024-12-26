@@ -1,9 +1,17 @@
+import os
 import json
 import mysql.connector
 
 def load_db_credentials():
-    with open('db_secret.json', 'r') as secret_file:
-        return json.load(secret_file)
+    if os.path.exists('db_secret.json'):
+        with open('db_secret.json', 'r') as secret_file:
+            return json.load(secret_file)
+
+    return {
+        "host": os.getenv('DB_HOST'),
+        "user": os.getenv('DB_USER'),
+        "password": os.getenv('DB_PASSWORD')
+    }
 
 def add_issue(publisher, series_title, issue_number):
     db_credentials = load_db_credentials()
