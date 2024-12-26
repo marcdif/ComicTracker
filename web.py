@@ -1,6 +1,6 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
-from utils import load_db_credentials, add_issue, remove_issue, get_publishers, get_series_titles, get_issues_count
+from utils import load_db_credentials, add_issue, remove_issue, clear_issue, get_publishers, get_series_titles, get_issues_count
 import mysql.connector
 
 def web_interface():
@@ -27,7 +27,7 @@ def web_interface():
                     cursor = connection.cursor(dictionary=True)
 
                     query = (
-                        "SELECT series.publisher AS Series_Publisher, series.title AS Series_Title, books.issue AS Issue, COUNT(books.id) AS Count, COUNT(*) AS Total_Count "
+                        "SELECT series.publisher AS Series_Publisher, series.title AS Series_Title, books.issue AS Issue, COUNT(books.id) AS Count, COUNT(*) AS Total_Count, box AS Box "
                         "FROM books "
                         "JOIN series ON books.series_fk = series.id "
                         "GROUP BY series.title, books.issue "
@@ -39,13 +39,14 @@ def web_interface():
                     total_count = get_issues_count()
 
                     html_table = "<table border='1'>"
-                    html_table += "<tr><th>Publisher</th><th>Series</th><th>Issue No.</th><th>Count</th><th>Action</th></tr>"
+                    html_table += "<tr><th>Publisher</th><th>Series</th><th>Issue No.</th><th>Count</th><th>Box</th><th>Action</th></tr>"
 
                     for row in cursor:
-                        add_url = f"/api?action=add&publisher={row['Series_Publisher']}&series={row['Series_Title']}&issue={row['Issue']}"
-                        remove_url = f"/api?action=remove&publisher={row['Series_Publisher']}&series={row['Series_Title']}&issue={row['Issue']}"
-                        html_table += f"<tr><td>{row['Series_Publisher']}</td><td>{row['Series_Title']}</td><td>{row['Issue']}</td><td>{row['Count']}</td>"
-                        html_table += f"<td><a href=\"{add_url}\">Add</a> | <a href=\"{remove_url}\">Remove</a></td></tr>"
+                        add_url = f"/api?action=add&publisher={row['Series_Publisher']}&series={row['Series_Title']}&issue={row['Issue']}&box={row['Box']}"
+                        remove_url = f"/api?action=remove&publisher={row['Series_Publisher']}&series={row['Series_Title']}&issue={row['Issue']}&box={row['Box']}"
+                        clear_url = f"/api?action=clear&publisher={row['Series_Publisher']}&series={row['Series_Title']}&issue={row['Issue']}&box={row['Box']}"
+                        html_table += f"<tr><td>{row['Series_Publisher']}</td><td>{row['Series_Title']}</td><td>{row['Issue']}</td><td>{row['Count']}</td><td>{row['Box']}</td>"
+                        html_table += f"<td><a href=\"{add_url}\">Add</a> | <a href=\"{remove_url}\">Remove</a> | <a href=\"{clear_url}\">Clear Issue</a></td></tr>"
 
                     html_table += "</table>"
 
@@ -54,6 +55,13 @@ def web_interface():
 
                     last_series_title = query_params.get('series', [None])[0]
                     last_series_title = "" if last_series_title == None else f'value="{last_series_title}"'
+
+                    last_box = query_params.get('box', [None])[0]
+
+                    html_box_select = "<select name='box' id='box'>"
+                    for letter in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P']:
+                        html_box_select += f"<option {"selected " if last_box == letter else ""}value='{letter}'>{letter}</option>"
+                    html_box_select += "</select>"
 
                     html_content = f"""
     <!DOCTYPE html>
@@ -103,6 +111,9 @@ def web_interface():
 
                 <label for="issue">Issue No:</label>
                 <input type="text" id="issue" name="issue" autocomplete="off" placeholder="Issue number">
+
+                <label for="box">Box:</label>
+                {html_box_select}
                 
                 <button type="submit">Submit</button>
             </div>
@@ -202,8 +213,9 @@ def web_interface():
                 publisher = query_params.get('publisher', [None])[0]
                 series = query_params.get('series', [None])[0]
                 issue = query_params.get('issue', [None])[0]
+                box = query_params.get('box', [None])[0]
 
-                if not action or not series or not issue:
+                if not action or not series or not issue or not publisher or not box:
                     self.send_response(400)
                     self.end_headers()
                     return
@@ -211,16 +223,18 @@ def web_interface():
                 try:
                     issue_number = int(issue)
                     if action == 'add':
-                        add_issue(publisher, series, issue_number)
+                        add_issue(publisher, series, issue_number, box)
                     elif action == 'remove':
                         remove_issue(publisher, series, issue_number)
+                    elif action == 'clear':
+                        clear_issue(publisher, series, issue_number)
                     else:
                         self.send_response(400)
                         self.end_headers()
                         return
 
                     self.send_response(302)
-                    self.send_header('Location', f'/?publisher={publisher}&series={series}')
+                    self.send_header('Location', f'/?publisher={publisher}&series={series}&box={box}')
                     self.end_headers()
 
                 except ValueError:
