@@ -92,6 +92,57 @@ def web_interface():
                 text-align: left;
                 border: 1px solid #ddd;
             }}
+
+            body {{
+                background-color: #ffffff;
+                color: #000000;
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 0;
+            }}
+            input[type="text"] {{
+                background-color: #ffffff;
+            }}
+            select {{
+                background-color: #ffffff;
+            }}
+            button {{
+                background-color: #ffffff;
+            }}
+            a {{
+                color: #0066cc;
+                text-decoration: none;
+            }}
+            a:visited {{
+                color: #663399;
+            }}
+            a:hover {{
+                text-decoration: underline;
+            }}
+            @media (prefers-color-scheme: dark) {{
+                body {{
+                    background-color: #121212;
+                    color: #9198a1;
+                }}
+                input[type="text"] {{
+                    background-color: #9198a1;
+                }}
+                select {{
+                    background-color: #9198a1;
+                }}
+                button {{
+                    background-color: #9198a1;
+                }}
+                a {{
+                    color: #66ccff;
+                }}
+                a:visited {{
+                    color: #99ccff;
+                }}
+                a:hover {{
+                    text-decoration: underline;
+                }}
+            }}
         </style>
     </head>
     <body>
