@@ -1,7 +1,14 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs, quote
 from utils import load_db_credentials, add_issue, remove_issue, clear_issue, get_publishers, get_series_titles, get_issues_count
 import mysql.connector
+
+def encode_for_url(string):
+    if string == None:
+        return None
+    if string == "":
+        return ""
+    return quote(f"{string}", safe='')
 
 def web_interface():
     class RequestHandler(BaseHTTPRequestHandler):
@@ -42,9 +49,9 @@ def web_interface():
                     html_table += "<tr><th>Publisher</th><th>Series</th><th>Issue No.</th><th>Count</th><th>Box</th><th>Action</th></tr>"
 
                     for row in cursor:
-                        add_url = f"/api?action=add&publisher={row['Series_Publisher']}&series={row['Series_Title']}&issue={row['Issue']}&box={row['Box']}"
-                        remove_url = f"/api?action=remove&publisher={row['Series_Publisher']}&series={row['Series_Title']}&issue={row['Issue']}&box={row['Box']}"
-                        clear_url = f"/api?action=clear&publisher={row['Series_Publisher']}&series={row['Series_Title']}&issue={row['Issue']}&box={row['Box']}"
+                        add_url = f"/api?action=add&publisher={encode_for_url(row['Series_Publisher'])}&series={encode_for_url(row['Series_Title'])}&issue={encode_for_url(row['Issue'])}&box={encode_for_url(row['Box'])}"
+                        remove_url = f"/api?action=remove&publisher={encode_for_url(row['Series_Publisher'])}&series={encode_for_url(row['Series_Title'])}&issue={encode_for_url(row['Issue'])}&box={encode_for_url(row['Box'])}"
+                        clear_url = f"/api?action=clear&publisher={encode_for_url(row['Series_Publisher'])}&series={encode_for_url(row['Series_Title'])}&issue={encode_for_url(row['Issue'])}&box={encode_for_url(row['Box'])}"
                         html_table += f"<tr><td>{row['Series_Publisher']}</td><td>{row['Series_Title']}</td><td>{row['Issue']}</td><td>{row['Count']}</td><td>{row['Box']}</td>"
                         html_table += f"<td><a href=\"{add_url}\">Add</a> | <a href=\"{remove_url}\">Remove</a> | <a href=\"{clear_url}\">Clear Issue</a></td></tr>"
 
